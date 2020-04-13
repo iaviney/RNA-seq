@@ -1,0 +1,25 @@
+#!/bin/bash
+#PBS -W group_list=paulcarini
+#PBS -q standard
+#PBS -l select=1:ncpus=6:mem=36gb
+#PBS -l place=pack:shared
+#PBS -l walltime=12:00:00
+#PBS -N shm
+#PBS -m abe
+
+### change the email address below to yours 
+#PBS -M iav@email.arizona.edu
+
+module load star
+
+### replace "/path/to/your/homeDir" in the next two lines to the actual path to your home directory (check the path using the command pwd after logging in HPC, if needed)
+F1="/home/u24/iav/pbs2/paired1.fq.gz"
+F2="/home/u24/iav/pbs2/paired2.fq.gz"
+
+
+### replace "yourNetID" in the next line to your actual NetID 
+Fo="/xdisk/guangyao/iav/pbs3/"
+
+date
+/usr/bin/time STAR --genomeDir /extra/guangyao/data/humanIndex SA --readFilesIn $F1 $F2 --readFilesCommand zcat --outFileNamePrefix $Fo --outSAMtype BAM SortedByCoordinate --outSAMstrandField intronMotif --runThreadN 6
+date

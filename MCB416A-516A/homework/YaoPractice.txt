@@ -1,0 +1,115 @@
+###My process doing RNA-seq analysis through MCB516A homework assignments
+
+###STEP 1: Trimming raw reads from fastq sequencing files using trimmomatic and HPC/PBS
+
+###Connect to UA HPC using an SSH client such as PuTTY for Windows
+###The host is hpc.arizona.edu
+###Log in using UA NetID and password
+
+###Choose the ocelote system in PuTTY HPC
+
+###Create under your home directory, a new folder called "pbs2"
+
+mkdir pbs2
+
+###Upload your trimmomatics file to HPC on the internet: (1) in OnDemand, choose Files>HomeDirectory (2) select "pbs2" (3)
+upload your trimmomatics files to pbs2 (4) Edit the trimmomatic file as needed
+
+###Run the trimmomatics script in PuTTY
+
+cd pbs2
+qsub trimmomatics.s.pbs
+
+###Here's the file: 
+
+#!/bin/bash
+#PBS -W group_list=paulcarini
+#PBS -q standard
+#PBS -l select=1:ncpus=2:mem=12gb
+#PBS -l place=pack:shared
+#PBS -l walltime=01:00:00
+#PBS -m abe
+
+#PBS -M iav@email.arizona.edu
+#PBS -N sHPCp
+
+module load trimmomatic
+ 
+cd ~/pbs2
+
+TmmJarPath="/cm/shared/uaapps/trimmomatic/0.39/bin"
+pairedRead1="/extra/guangyao/data/exampleRawReads/wgEncodeCaltechRnaSeqGm12892R2x75Il200FastqRd1Rep2V2.fastq.gz"
+pairedRead2="/extra/guangyao/data/exampleRawReads/wgEncodeCaltechRnaSeqGm12892R2x75Il200FastqRd2Rep2V2.fastq.gz"
+
+date
+/usr/bin/time java -jar $TmmJarPath/trimmomatic.jar PE -phred64 $pairedRead1 $pairedRead2 paired1.fq.gz unpaired1.fq.gz paired2.fq.gz unpaired2.fq.gz MAXINFO:50:0.8 MINLEN:50
+date
+
+###Once this is done, you can look at the quality of your trimmed reads
+
+###STEP 2: Map/align the trimmed reads to the human genome index using STAR
+
+###Go into the public HPC directory, find /xdisk/guangyao/ and make a directory in there named "iav" 
+ mkdir iav
+
+###make another directory "pbs3" in there
+
+###Run the STAR script for mapping to the human genome in PuTTY; here is the script: 
+
+#!/bin/bash
+#PBS -W group_list=paulcarini
+#PBS -q standard
+#PBS -l select=1:ncpus=6:mem=36gb
+#PBS -l place=pack:shared
+#PBS -l walltime=12:00:00
+#PBS -N shm
+#PBS -m abe
+
+### change the email address below to yours 
+#PBS -M iav@email.arizona.edu
+
+module load star
+
+### replace "/path/to/your/homeDir" in the next two lines to the actual path to your home directory (check the path using the command pwd after logging in HPC, if needed)
+F1="/home/u24/iav/pbs2/paired1.fq.gz"
+F2="/home/u24/iav/pbs2/paired2.fq.gz"
+
+
+### replace "yourNetID" in the next line to your actual NetID 
+Fo="/xdisk/guangyao/iav/pbs3/"
+
+date
+/usr/bin/time STAR --genomeDir /extra/guangyao/data/humanIndex SA --readFilesIn $F1 $F2 --readFilesCommand zcat --outFileNamePrefix $Fo --outSAMtype BAM SortedByCoordinate --outSAMstrandField intronMotif --runThreadN 6
+date
+
+###STEP 3: Count the mapped reads, producing a count table
+
+###create a subdir "pbs4" under directory iav
+
+###run the feature counts script; here is the script: 
+
+#!/bin/bash
+#PBS -W group_list=paulcarini
+#PBS -q standard
+#PBS -l select=1:ncpus=6:mem=36gb
+#PBS -l place=pack:shared
+#PBS -l walltime=2:00:00
+#PBS -m abe
+#PBS -N fc
+
+#### change the email address below to yours 
+#PBS -M iav@email.arizona.edu
+
+MP="/extra/guangyao/modules/subread-2.0.0-Linux-x86_64/bin"
+annotation="/extra/guangyao/data/humanIndex/hs.genome.annotation/gencode.v26.primary_assembly.annotation.gtf"
+
+### replace "yourNetID" in the next two lines to your actual NetID 
+OP="/xdisk/guangyao/iav/pbs4"
+IP="/xdisk/guangyao/iav/pbs3/Aligned.sortedByCoord.out.bam"
+
+
+date
+/usr/bin/time $MP/featureCounts -T 6 -p -a $annotation -o $OP/featureCounts_PE.txt $IP
+date
+
+

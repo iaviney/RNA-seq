@@ -1,0 +1,23 @@
+#!/bin/bash
+#PBS -W group_list=paulcarini
+#PBS -q standard
+#PBS -l select=1:ncpus=2:mem=12gb
+#PBS -l place=pack:shared
+#PBS -l walltime=01:00:00
+#PBS -m abe
+
+#PBS -M iav@email.arizona.edu
+#PBS -N sHPCp
+
+module load trimmomatic
+ 
+cd ~/pbs2
+
+TmmJarPath="/cm/shared/uaapps/trimmomatic/0.39/bin"
+pairedRead1="/extra/guangyao/data/exampleRawReads/wgEncodeCaltechRnaSeqGm12892R2x75Il200FastqRd1Rep2V2.fastq.gz"
+pairedRead2="/extra/guangyao/data/exampleRawReads/wgEncodeCaltechRnaSeqGm12892R2x75Il200FastqRd2Rep2V2.fastq.gz"
+
+date
+/usr/bin/time java -jar $TmmJarPath/trimmomatic.jar PE -phred64 $pairedRead1 $pairedRead2 paired1.fq.gz unpaired1.fq.gz paired2.fq.gz unpaired2.fq.gz MAXINFO:50:0.8 MINLEN:50
+date
+

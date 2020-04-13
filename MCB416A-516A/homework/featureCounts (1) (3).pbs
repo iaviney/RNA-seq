@@ -1,0 +1,23 @@
+#!/bin/bash
+#PBS -W group_list=paulcarini
+#PBS -q standard
+#PBS -l select=1:ncpus=6:mem=36gb
+#PBS -l place=pack:shared
+#PBS -l walltime=2:00:00
+#PBS -m abe
+#PBS -N fc
+
+#### change the email address below to yours 
+#PBS -M iav@email.arizona.edu
+
+MP="/extra/guangyao/modules/subread-2.0.0-Linux-x86_64/bin"
+annotation="/extra/guangyao/data/humanIndex/hs.genome.annotation/gencode.v26.primary_assembly.annotation.gtf"
+
+### replace "yourNetID" in the next two lines to your actual NetID 
+OP="/xdisk/guangyao/iav/pbs4"
+IP="/xdisk/guangyao/iav/pbs3/Aligned.sortedByCoord.out.bam"
+
+
+date
+/usr/bin/time $MP/featureCounts -T 6 -p -a $annotation -o $OP/featureCounts_PE.txt $IP
+date
